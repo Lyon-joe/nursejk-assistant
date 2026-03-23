@@ -1,13 +1,21 @@
 import express from "express";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
+
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 app.use(express.json());
 
@@ -50,17 +58,20 @@ app.post("/api/chat", async (req, res) => {
       ]
     });
 
-    const reply = response.choices[0].message.content;
+    const reply = response.choices?.[0]?.message?.content || "No response received.";
+
     res.json({ reply });
   } catch (error) {
+    console.error("OpenAI error:", error);
+
     res.status(500).json({
-      error: error.message || "Server error"
+      error: error?.message || "Server error"
     });
   }
 });
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
